@@ -1,6 +1,6 @@
 # AWS 3-Tier Architecture with Security-by-Design
 
-**Yvan Raffi** | AWS Certified Solutions Architect Associate | Cloud Security
+**Yvan SAF** | AWS Certified Solutions Architect Associate | Cloud Security
 
 This project deploys a 3-tier web application infrastructure on AWS. I built it to demonstrate how to apply security controls at every layer of an architecture, not just at the perimeter.
 
@@ -57,9 +57,9 @@ Private Subnet (10.0.3.0/24 + 10.0.4.0/24, AZ us-east-1a and us-east-1b)
 aws-3tier-architecture/
 ├── infra/
 │   ├── terraform/       Terraform code for automated deployment
-│   └── console/         Step-by-step console guide with screenshot list
+│   └── console/         Step-by-step console guide with screenshots
 ├── docs/
-│   ├── architecture/    Architecture diagrams
+│   ├── architecture/    Architecture diagram and console screenshots
 │   ├── decisions/       Architecture Decision Records (ADR-001 to ADR-010)
 │   └── lessons-learned.md
 └── README.md
@@ -72,32 +72,73 @@ aws-3tier-architecture/
 ### Prerequisites
 
 - Terraform >= 1.5.0
-- AWS CLI configured
+- AWS CLI configured with valid credentials
 - SSM Plugin for AWS CLI ([installation guide](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html))
 
 ### 1. Set your AWS credentials
 
 ```bash
-export AWS_ACCESS_KEY_ID="ASIA..."
+export AWS_ACCESS_KEY_ID="..."
 export AWS_SECRET_ACCESS_KEY="..."
-export AWS_SESSION_TOKEN="..."
+export AWS_SESSION_TOKEN="..."    # required if using temporary credentials
 export AWS_DEFAULT_REGION="us-east-1"
 ```
 
-### 2. Initialize and deploy
+### 2. Clone the repo and initialize Terraform
 
 ```bash
-cd infra/terraform
+git clone https://github.com/yvansaf/aws-3tier-architecture.git
+cd aws-3tier-architecture/infra/terraform
 terraform init
+```
+
+### 3. Create your variables file
+
+The `terraform.tfvars` file is excluded from Git. Create it from the defaults in `variables.tf`:
+
+```bash
+cat > terraform.tfvars << 'TFVARS'
+aws_region   = "us-east-1"
+project_name = "yvan-3tier"
+environment  = "dev"
+owner        = "yvan-raffi"
+
+vpc_cidr                 = "10.0.0.0/16"
+public_subnet_cidr       = "10.0.1.0/24"
+private_subnet_app_cidr  = "10.0.2.0/24"
+private_subnet_db_a_cidr = "10.0.3.0/24"
+private_subnet_db_b_cidr = "10.0.4.0/24"
+az_a                     = "us-east-1a"
+az_b                     = "us-east-1b"
+
+instance_type        = "t2.micro"
+ami_id               = "ami-0c02fb55956c7d316"
+lab_instance_profile = "LabInstanceProfile"
+
+db_name              = "mydb"
+db_username          = "admin"
+db_instance_class    = "db.t3.micro"
+db_allocated_storage = 20
+
+alert_email = ""
+
+enable_secrets_manager = false
+enable_flow_logs       = false
+TFVARS
+```
+
+### 4. Deploy
+
+```bash
 terraform plan
 terraform apply
 ```
 
 Deployment takes around 12 to 15 minutes. RDS is the slowest resource to provision.
 
-### 3. Test the deployment
+### 5. Test the deployment
 
-After `terraform apply` finishes, the outputs give you all the commands you need:
+The outputs printed after `terraform apply` give you all the commands you need:
 
 ```bash
 # Check that the web server is responding
@@ -113,30 +154,32 @@ aws ssm start-session --target <app_instance_id> --region us-east-1
 terraform output -raw db_password
 ```
 
-### 4. Clean up
+### 6. Clean up
 
 ```bash
 terraform destroy
 ```
 
-The NAT Gateway is the most expensive resource (~$0.045 per hour). Always destroy after finishing a lab session.
+The NAT Gateway is the most expensive resource (~$0.045 per hour). Always destroy after finishing a session.
 
 ---
 
 ## Feature Flags
 
-Two features are disabled by default because they require IAM permissions that are not available in all environments. They are fully implemented in the code and can be enabled by editing `infra/terraform/terraform.tfvars`.
+Two features are disabled by default because they require IAM permissions that may not be available in all environments. Both are fully implemented in the code and ready to enable.
 
-| Flag | Default | What it enables |
-|------|---------|-----------------|
-| `enable_secrets_manager` | false | Store the RDS password in AWS Secrets Manager |
-| `enable_flow_logs` | false | Send VPC network logs to CloudWatch |
+| Flag | Default | What it enables | Permission required |
+|------|---------|-----------------|---------------------|
+| `enable_secrets_manager` | false | Store the RDS password in AWS Secrets Manager | `secretsmanager:CreateSecret` |
+| `enable_flow_logs` | false | Send VPC network logs to CloudWatch | `iam:PassRole` |
+
+To enable either feature, set the corresponding flag to `true` in your `terraform.tfvars` file.
 
 ---
 
 ## Console Deployment
 
-A full step-by-step guide for deploying the same architecture through the AWS Management Console is available in [`infra/console/console-guide.md`](infra/console/console-guide.md). It includes a precise list of screenshots to capture at each step.
+A full step-by-step guide for deploying the same architecture through the AWS Management Console is available in [`infra/console/console-guide.md`](infra/console/console-guide.md). It includes screenshots at each key step.
 
 ---
 
@@ -183,6 +226,5 @@ See [`docs/lessons-learned.md`](docs/lessons-learned.md).
 
 ## Author
 
-Yvan Raffi
-AWS Certified Cloud Practitioner | AWS Certified Solutions Architect Associate
-Cameroon | Cloud Security | DevSecOps
+Yvan SAF
+AWS Certified Solutions Architect Associate | Cloud Security | DevSecOps
