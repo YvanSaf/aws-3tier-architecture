@@ -1,0 +1,23 @@
+# State Terraform — contient des données sensibles (IPs, endpoints, passwords)
+terraform.tfstate
+terraform.tfstate.backup
+.terraform.tfstate.lock.info
+
+# Répertoire de travail Terraform
+.terraform/
+
+# Fichier de variables — peut contenir des valeurs sensibles
+terraform.tfvars
+
+# Fichiers de plan Terraform
+*.tfplan
+*.plan
+
+# Fichiers système
+.DS_Store
+*.swp
+*~
+
+# Variables d'environnement locales
+.env
+.env.local
