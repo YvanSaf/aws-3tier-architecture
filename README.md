@@ -10,7 +10,7 @@ The three tiers are isolated from each other at the network level. Each one can 
 
 ## Architecture
 
-![Architecture Diagram](docs/architecture/architecture.png)
+![Architecture Diagram](docs/architecture/architecture.gif)
 
 ```
 Internet
